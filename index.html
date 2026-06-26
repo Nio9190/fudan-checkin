@@ -297,21 +297,6 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     line-height: 1.5;
   }
-  .toast.alert-toast {
-    background: #c0392b;
-    color: #fff;
-    font-size: 18px;
-    padding: 16px 30px;
-    border-radius: 12px;
-    font-weight: 700;
-    box-shadow: 0 6px 30px rgba(192,57,43,0.5);
-    animation: alertToastIn 0.4s ease;
-    line-height: 1.6;
-  }
-  @keyframes alertToastIn {
-    from { opacity:0; transform: translateX(-50%) translateY(-20px) scale(0.8); }
-    to { opacity:1; transform: translateX(-50%) translateY(0) scale(1); }
-  }
   @keyframes toastIn {
     from { opacity:0; transform: translateX(-50%) translateY(-10px); }
     to { opacity:1; transform: translateX(-50%) translateY(0); }
@@ -949,7 +934,7 @@ function updateButtonStates() {
 function doCheckin() {
   // 地理围栏校验（严格模式：超出100米或定位未获取则不能签到）
   if (state.locStatus !== 'ok') {
-    showAlertToast('⛔ 不在暑托班工作区域内！\n请在工作区内打卡签到');
+    showToast('⚠️ 请在工作区域内打卡');
     return;
   }
   if (!canCheckin()) {
@@ -980,7 +965,7 @@ function doCheckin() {
 function doCheckout() {
   // 地理围栏校验（严格模式：超出100米或定位未获取则不能签退）
   if (state.locStatus !== 'ok') {
-    showAlertToast('⛔ 不在暑托班工作区域内！\n请在工作区内打卡签退');
+    showToast('⚠️ 请在工作区域内打卡');
     return;
   }
   if (!canCheckout()) {
@@ -1119,18 +1104,6 @@ function showToast(message) {
   }, 2500);
 }
 
-function showAlertToast(message) {
-  const container = document.createElement('div');
-  container.className = 'toast alert-toast';
-  container.textContent = message;
-  document.body.appendChild(container);
-  // 醒目弹窗显示5秒，更长更醒目
-  setTimeout(() => {
-    container.style.opacity = '0';
-    container.style.transition = 'opacity 0.5s';
-    setTimeout(() => container.remove(), 500);
-  }, 5000);
-}
 </script>
 </body>
 </html>
