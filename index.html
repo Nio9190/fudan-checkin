@@ -216,23 +216,6 @@
   .btn-action .icon { font-size: 28px; }
   .btn-action .label { font-size: 16px; }
   .btn-action .hint { font-size: 10px; opacity: 0.75; }
-  .btn-action .hint.loc-error {
-    font-size: 12px;
-    color: #ffcccc;
-    opacity: 1;
-    font-weight: 700;
-    display: block;
-    margin-top: 2px;
-    line-height: 1.35;
-    text-align: center;
-    padding: 2px 6px;
-    animation: hintBlink 1.2s ease-in-out infinite;
-    word-break: break-word;
-  }
-  @keyframes hintBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
   .btn-checkin { background: linear-gradient(135deg, #3a7d44, #48a254); box-shadow: 0 4px 16px rgba(58,125,68,0.3); }
   .btn-checkout { background: linear-gradient(135deg, var(--primary), var(--primary-light)); box-shadow: 0 4px 16px rgba(26,111,196,0.3); }
   .countdown {
@@ -894,10 +877,8 @@ function updateButtonStates() {
     checkinBtn.disabled = true;
     checkinHint.textContent = '已签到';
   } else if (state.locStatus !== 'ok') {
-    // 定位不在范围内或未获取
+    // 定位不在范围内或未获取——按钮禁用，点击时弹窗提示
     checkinBtn.disabled = true;
-    checkinHint.textContent = '⛔ 不在暑托班工作区域内，请在工作区内打卡';
-    checkinHint.className = 'hint loc-error';
   } else if (!canCheckin()) {
     // 时间不允许（仅正式模式会到这里，测试模式 canCheckin 永远 true）
     checkinBtn.disabled = true;
@@ -926,8 +907,6 @@ function updateButtonStates() {
     checkoutHint.textContent = '请先签到';
   } else if (state.locStatus !== 'ok') {
     checkoutBtn.disabled = true;
-    checkoutHint.textContent = '⛔ 不在暑托班工作区域内，请在工作区内打卡';
-    checkoutHint.className = 'hint loc-error';
   } else if (!canCheckout()) {
     checkoutBtn.disabled = true;
     checkoutHint.textContent = '未到时间';
