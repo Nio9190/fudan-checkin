@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1a6fc4">
+<meta property="og:title" content="复旦暑托班工作人员考勤打卡">
+<meta property="og:description" content="复旦暑托班工作人员考勤打卡系统">
+<meta property="og:type" content="website">
+<title>复旦暑托班工作人员考勤打卡</title>
+<style>
+  :root {
+    --primary: #1a6fc4;
+    --primary-light: #2080d8;
+    --primary-bg: #f0f6ff;
+    --accent: #4990e2;
+    --success: #3a7d44;
+    --danger: #c0392b;
+    --warn: #c9a94e;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #2c2c2c;
+    --text-secondary: #7a7268;
+    --border: #dce3ed;
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 24px);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 480px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 28px 20px 20px;
+    border-radius: 0 0 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content:'';
+    position: absolute;
+    right: -20px; top: -20px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .header-logo { font-size: 32px; margin-bottom: 2px; }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+  .clock-area {
+    margin-top: 14px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .clock-time { font-size: 26px; font-weight: 300; letter-spacing: 2px; }
+  .clock-date { font-size: 12px; opacity: 0.85; line-height: 1.5; }
+  .countdown-tag {
+    background: rgba(255,255,255,0.18);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .body { padding: 14px 14px 0; }
+
+  /* Section Card */
+  .section {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Campus Selector */
+  .campus-group { display: flex; gap: 10px; }
+  .campus-btn {
+    flex: 1;
+    height: 52px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .campus-btn:active { transform: scale(0.97); }
+  .campus-btn.active {
+    border-color: var(--primary);
+    background: #fdf0f3;
+    color: var(--primary);
+  }
+
+  /* Form */
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .form-group { flex: 1; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+  .form-group select, .form-group input {
+    width: 100%;
+    height: 42px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a7268' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .role-display {
+    width: 100%;
+    height: 42px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+  }
+  .role-display.set {
+    color: var(--text);
+    font-weight: 600;
+    background: #f0faf2;
+    border-color: #a5d6a7;
+  }
+
+  /* Location */
+  .loc-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    min-height: 40px;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow 0.2s;
+  }
+  .loc-bar:active { box-shadow: 0 0 0 2px var(--primary); }
+  .loc-bar .dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+  }
+  .loc-bar .loc-text { flex: 1; }
+  .loc-ok { background: #f0faf2; color: var(--success); cursor: default; }
+  .loc-ok .dot { background: var(--success); }
+  .loc-ok:active { box-shadow: none; }
+  .loc-warn { background: #fdf8ee; color: #8a6914; }
+  .loc-warn .dot { background: var(--warn); }
+  .loc-err { background: #fef0f0; color: var(--danger); }
+  .loc-err .dot { background: var(--danger); }
+  .loc-loading { background: #eff6ff; color: var(--text-secondary); }
+  .loc-loading .dot { background: #b0a89e; animation: pulse 1s infinite; }
+
+  /* Action Buttons */
+  .actions { display: flex; gap: 12px; margin-top: 14px; }
+  .btn-action {
+    flex: 1;
+    height: 80px;
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: transform 0.15s, opacity 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-action:active { transform: scale(0.95); }
+  .btn-action .icon { font-size: 28px; }
+  .btn-action .label { font-size: 16px; }
+  .btn-action .hint { font-size: 10px; opacity: 0.75; }
+  .btn-checkin { background: linear-gradient(135deg, #3a7d44, #48a254); box-shadow: 0 4px 16px rgba(58,125,68,0.3); }
+  .btn-checkout { background: linear-gradient(135deg, var(--primary), var(--primary-light)); box-shadow: 0 4px 16px rgba(26,111,196,0.3); }
+  .countdown {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    min-height: 20px;
+    line-height: 1.5;
+  }
+  .countdown.active { color: var(--primary); font-weight: 600; }
+  .btn-action:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: grayscale(0.3); }
+
+  /* Status message */
+  .status-msg {
+    text-align: center;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .status-late { background: #fdf8ee; color: #8a6914; }
+  .status-ok { background: #f0faf2; color: var(--success); }
+  .status-denied { background: #fef0f0; color: var(--danger); }
+  .status-info { background: #e3f2fd; color: #1565c0; }
+
+  /* Time rule hint */
+  .time-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* Today's Records */
+  .record-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .record-item:last-child { border-bottom: none; }
+  .record-badge {
+    width: 44px; height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .record-badge.in { background: #e8f5e9; color: var(--success); }
+  .record-badge.out { background: #e3f0fd; color: var(--primary); }
+  .record-time { flex: 1; font-size: 14px; font-weight: 600; }
+  .record-meta { font-size: 11px; color: var(--text-secondary); }
+
+  .no-record { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    animation: toastIn 0.3s ease;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    line-height: 1.5;
+  }
+  @keyframes toastIn {
+    from { opacity:0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity:1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* Thank you overlay */
+  .overlay {
+    position: fixed; inset:0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .overlay.hidden { display: none; }
+  .thank-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    animation: popIn 0.3s ease;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .thank-emoji { font-size: 48px; margin-bottom: 12px; }
+  .thank-title { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+  .thank-detail { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+  .thank-name { font-weight: 700; color: var(--text); }
+  .thank-btn {
+    width: 100%;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">📋</div>
+    <h1>复旦暑托班工作人员考勤打卡</h1>
+    <div class="clock-area">
+      <div>
+        <div class="clock-time" id="clock">--:--:--</div>
+        <div class="clock-date" id="clockDate">----年--月--日 星期-</div>
+      </div>
+      <div class="countdown-tag" id="countdownTag">--</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Campus -->
+    <div class="section">
+      <div class="section-title">📍 选择校区</div>
+      <div class="campus-group">
+        <button class="campus-btn" id="btnHandan" onclick="selectCampus('handan')">🏫 邯郸校区</button>
+        <button class="campus-btn" id="btnFenglin" onclick="selectCampus('fenglin')">🏫 枫林校区</button>
+      </div>
+      <div class="time-hint" id="timeHint"></div>
+    </div>
+
+    <!-- User Info -->
+    <div class="section">
+      <div class="section-title">👤 个人信息</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>姓名</label>
+          <select id="userName" onchange="onUserChange()">
+            <option value="">请选择</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>岗位</label>
+          <div class="role-display" id="userRoleDisplay">—</div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div id="locBar" class="loc-bar loc-loading" onclick="requestLocation()">
+        <div class="dot"></div>
+        <span class="loc-text" id="locText">点击此处启用定位权限</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <div class="section-title">⏱️ 打卡操作</div>
+      <div class="actions">
+        <button class="btn-action btn-checkin" id="btnCheckin" onclick="doCheckin()">
+          <span class="icon">✋</span>
+          <span class="label">签 到</span>
+          <span class="hint" id="checkinHint"></span>
+        </button>
+        <button class="btn-action btn-checkout" id="btnCheckout" onclick="doCheckout()">
+          <span class="icon">🚪</span>
+          <span class="label">签 退</span>
+          <span class="hint" id="checkoutHint"></span>
+        </button>
+        <div class="countdown" id="checkoutCountdown"></div>
+      </div>
+      <div id="statusMsg"></div>
+    </div>
+
+    <!-- Today's Records -->
+    <div class="section">
+      <div class="section-title">📊 今日打卡记录</div>
+      <div id="recordsList">
+        <div class="no-record">暂无记录</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Thank You Overlay -->
+<div class="overlay hidden" id="thankOverlay">
+  <div class="thank-card">
+    <div class="thank-emoji">🎉</div>
+    <div class="thank-title">签退成功！</div>
+    <div class="thank-detail">
+      <span class="thank-name" id="thankName"></span><br>
+      感谢你今天的志愿服务，辛苦啦！<br>
+      <span style="font-size:12px;color:#b0a89e;" id="thankTime"></span>
+    </div>
+    <button class="thank-btn" onclick="closeThank()">好的，再见 👋</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CONFIG = {
+  campuses: {
+    handan: {
+      name: '邯郸校区',
+      lat: 31.2955,
+      lng: 121.5050,
+      label: '国年路275弄7号',
+      checkinSoft: 8,          // 8:00 后算迟到
+      checkinDeadline: 8.5,    // 8:30 签到截止
+    },
+    fenglin: {
+      name: '枫林校区',
+      lat: 31.196922,
+      lng: 121.450343,
+      label: '东安路130号西6号楼',
+      checkinSoft: 8.5,        // 8:30 后算迟到
+      checkinDeadline: 9,      // 9:00 签到截止
+    }
+  },
+  geoFenceRadius: 100,      // 地理围栏半径（米），超出显示警告但不阻断
+  checkinStart: 7,            // 7:00 允许开始签到
+  checkoutStart: 17,          // 17:00 允许签退
+  checkoutDeadline: 20,       // 20:00 签退截止
+  storageKey: 'fudan_attendance_v3',
+  users: [
+    // 邯郸F一班
+    { name: '徐秀华', role: '班主任', campus: 'handan' },
+    { name: '罗媛', role: '志愿者', campus: 'handan' },
+    { name: '尔金拉姆', role: '志愿者', campus: 'handan' },
+    { name: '秋机降乃', role: '志愿者', campus: 'handan' },
+    // 邯郸F二班
+    { name: '张海燕', role: '班主任', campus: 'handan' },
+    { name: '王紫睿', role: '志愿者', campus: 'handan' },
+    { name: '卓切', role: '志愿者', campus: 'handan' },
+    { name: '土登尼玛', role: '志愿者', campus: 'handan' },
+    // 枫林F三班
+    { name: '金继塘', role: '班主任', campus: 'fenglin' },
+    { name: '刘婉晴', role: '志愿者', campus: 'fenglin' },
+    { name: '郑健', role: '志愿者', campus: 'fenglin' },
+    // 管理层
+    { name: 'Jason', role: '安全员', campus: 'fenglin' },
+    { name: '高老师', role: '总负责', campus: 'fenglin' },
+    { name: 'Jason', role: '安全员', campus: 'handan' },
+    { name: '高老师', role: '总负责', campus: 'handan' },
+    // 邯郸服务志愿者
+    { name: '胡圣航', role: '志愿者', campus: 'handan' },
+  ]
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  campus: null,          // 'handan' | 'fenglin'
+  location: null,        // { lat, lng, accuracy }
+  locStatus: 'loading',  // 'loading'|'ok'|'warn'|'error'
+  locDistance: null,     // meters from campus center
+  userName: '',
+  userRole: '',
+  todayRecords: [],
+  now: new Date(),
+  _lateShown: false
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  initUserSelect();
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // 定位：100米围栏严格模式（超出范围或定位未获取则不能打卡）
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then(res => {
+      if (res.state === 'granted') {
+        setLocStatus('loading', '正在获取定位…');
+        requestLocation();
+      } else {
+        setLocStatus('error', '点击上方栏启用定位权限 👆');
+      }
+    }).catch(() => {
+      setLocStatus('error', '点击上方栏启用定位权限 👆');
+    });
+  } else {
+    setLocStatus('error', '点击上方栏启用定位权限 👆');
+  }
+
+  renderRecords();
+  loadLastState();
+});
+
+function initUserSelect() {
+  const sel = document.getElementById('userName');
+  sel.innerHTML = '<option value="">请先选择校区</option>';
+  sel.addEventListener('change', onUserChange);
+}
+
+function refreshUserSelect() {
+  const sel = document.getElementById('userName');
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+
+  if (!state.campus) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '请先选择校区';
+    sel.appendChild(opt);
+    return;
+  }
+
+  const opt = document.createElement('option');
+  opt.value = '';
+  opt.textContent = '请选择姓名';
+  sel.appendChild(opt);
+
+  const filtered = CONFIG.users.filter(u => u.campus === state.campus);
+  filtered.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.name;
+    opt.textContent = u.name;
+    opt.dataset.role = u.role;
+    sel.appendChild(opt);
+  });
+
+  // 尝试恢复之前选中的人
+  if (prevValue) {
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === prevValue) {
+        sel.value = prevValue;
+        onUserChange();
+        return;
+      }
+    }
+  }
+  // 之前的选人不在当前校区，清空
+  sel.value = '';
+  onUserChange();
+}
+
+function onUserChange() {
+  state.userName = document.getElementById('userName').value;
+  const sel = document.getElementById('userName');
+  const roleDisplay = document.getElementById('userRoleDisplay');
+  if (sel.selectedOptions[0] && sel.selectedOptions[0].dataset.role) {
+    state.userRole = sel.selectedOptions[0].dataset.role;
+    roleDisplay.textContent = state.userRole;
+    roleDisplay.classList.add('set');
+  } else {
+    state.userRole = '';
+    roleDisplay.textContent = '—';
+    roleDisplay.classList.remove('set');
+  }
+  saveLastState();
+  renderRecords();
+}
+
+function loadLastState() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CONFIG.storageKey + '_last'));
+    if (d) {
+      if (d.campus) selectCampus(d.campus, true);
+      if (d.userName) {
+        const sel = document.getElementById('userName');
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === d.userName) {
+            sel.value = d.userName;
+            break;
+          }
+        }
+        state.userName = d.userName;
+        state.userRole = d.userRole || '';
+        onUserChange();
+      }
+    }
+  } catch(e) {}
+}
+
+function saveLastState() {
+  localStorage.setItem(CONFIG.storageKey + '_last', JSON.stringify({
+    campus: state.campus,
+    userName: state.userName,
+    userRole: state.userRole
+  }));
+}
+
+// ============================================================
+// CLOCK & COUNTDOWN
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  state.now = now;
+  document.getElementById('clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+  const weekdays = ['日','一','二','三','四','五','六'];
+  document.getElementById('clockDate').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${weekdays[now.getDay()]}`;
+  updateCountdown();
+  updateButtonStates();
+}
+
+function getCheckinDeadline() {
+  if (!state.campus) return CONFIG.checkinStart + 1.5; // fallback 8:30
+  return CONFIG.campuses[state.campus].checkinDeadline;
+}
+
+function getCheckinSoft() {
+  if (!state.campus) return 8; // fallback 8:00
+  return CONFIG.campuses[state.campus].checkinSoft;
+}
+
+function updateCountdown() {
+  const now = state.now;
+  const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  const nowMin = h * 60 + m;
+  const tag = document.getElementById('countdownTag');
+
+  const hasCheckin = state.todayRecords.find(r => r.type === '签到');
+  const hasCheckout = state.todayRecords.find(r => r.type === '签退');
+
+  if (hasCheckout) {
+    tag.textContent = '✅ 今日已完成';
+    tag.style.background = 'rgba(58,125,68,0.2)';
+    return;
+  }
+
+  if (hasCheckin) {
+    // Countdown to checkout start (17:00)
+    const targetMin = CONFIG.checkoutStart * 60;
+    const diff = targetMin - nowMin;
+    if (diff > 0) {
+      const dh = Math.floor(diff / 60);
+      const dm = diff % 60;
+      tag.textContent = `⏱️ 距签退${dh}小时${dm}分`;
+      tag.style.background = 'rgba(255,255,255,0.18)';
+    } else {
+      tag.textContent = '✅ 可签退';
+      tag.style.background = 'rgba(58,125,68,0.2)';
+    }
+    return;
+  }
+
+  // Not checked in yet — countdown to campus-specific deadline
+  const deadline = getCheckinDeadline();
+  const deadlineMin = deadline * 60;
+  const diff = deadlineMin - nowMin;
+  if (diff > 0 && nowMin >= CONFIG.checkinStart * 60) {
+    const dh = Math.floor(diff / 60);
+    const dm = diff % 60;
+    tag.textContent = `⏰ ${dh}时${dm}分后截止`;
+    tag.style.background = diff <= 30 ? 'rgba(200,57,43,0.25)' : 'rgba(255,255,255,0.18)';
+  } else if (nowMin >= deadlineMin) {
+    tag.textContent = '⛔ 签到已截止';
+    tag.style.background = 'rgba(200,57,43,0.25)';
+  } else {
+    tag.textContent = '⏰ 等待签到';
+    tag.style.background = 'rgba(255,255,255,0.18)';
+  }
+}
+
+// ============================================================
+// CAMPUS
+// ============================================================
+function selectCampus(campus, silent) {
+  state.campus = campus;
+  document.getElementById('btnHandan').classList.toggle('active', campus === 'handan');
+  document.getElementById('btnFenglin').classList.toggle('active', campus === 'fenglin');
+
+  // Update time rule hint
+  const deadline = getCheckinDeadline();
+  const soft = getCheckinSoft();
+  const deadlineStr = `${Math.floor(deadline)}:${(deadline % 1) * 60 === 0 ? '00' : '30'}`;
+  const softStr = `${Math.floor(soft)}:${(soft % 1) * 60 === 0 ? '00' : '30'}`;
+  document.getElementById('timeHint').textContent =
+    `⏰ ${CONFIG.campuses[campus].name}：签到 7:00~${deadlineStr} | ${softStr}后算迟到 | 签退 17:00~20:00`;
+
+  saveLastState();
+  refreshUserSelect();
+  if (state.location && !silent) evaluateLocation();
+  updateButtonStates();
+}
+
+// ============================================================
+// LOCATION
+// ============================================================
+// 获取定位（100米围栏严格模式：超出范围或定位失败则不能打卡）
+function requestLocation() {
+  setLocStatus('loading', '正在获取定位…');
+  if (!navigator.geolocation) {
+    setLocStatus('error', '浏览器不支持定位，请在手机上使用');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      state.location = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      };
+      evaluateLocation();
+    },
+    err => {
+      const msgs = {
+        1: '定位被拒绝，请点击上方栏授权后重试',
+        2: '定位不可用，请检查GPS是否开启',
+        3: '定位超时，请移至开阔处重试'
+      };
+      setLocStatus('error', msgs[err.code] || '定位失败');
+    },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 }
+  );
+}
+
+function tryGetLocation() {
+  requestLocation();
+}
+
+function retryLocation() {
+  state.location = null;
+  requestLocation();
+}
+
+function evaluateLocation() {
+  if (!state.campus) {
+    setLocStatus('loading', '请先选择校区');
+    return;
+  }
+  if (!state.location) {
+    setLocStatus('loading', '正在获取定位…');
+    return;
+  }
+
+  const camp = CONFIG.campuses[state.campus];
+  const dist = getDistance(state.location.lat, state.location.lng, camp.lat, camp.lng);
+  state.locDistance = dist;
+
+  if (dist <= CONFIG.geoFenceRadius) {
+    setLocStatus('ok', `✅ 已定位 · ${camp.name} · 精度${state.location.accuracy.toFixed(0)}米 · 距中心${dist.toFixed(0)}米`);
+  } else {
+    setLocStatus('warn', `⚠️ 距${camp.name}中心${dist.toFixed(0)}米，超出${CONFIG.geoFenceRadius}米范围，不能打卡`);
+  }
+}
+
+function setLocStatus(status, text) {
+  state.locStatus = status;
+  const bar = document.getElementById('locBar');
+  bar.className = 'loc-bar loc-' + (status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : status === 'error' ? 'err' : 'loading');
+  document.getElementById('locText').textContent = text;
+
+  // 定位成功后移除点击监听（无需重复请求）
+  if (status === 'ok') {
+    bar.onclick = null;
+    bar.style.cursor = 'default';
+  } else {
+    bar.onclick = requestLocation;
+    bar.style.cursor = 'pointer';
+  }
+}
+
+function getDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ============================================================
+// CHECK-IN / CHECK-OUT
+// ============================================================
+function canCheckin() {
+  const now = state.now;
+  const h = now.getHours(), m = now.getMinutes();
+  const nowMin = h * 60 + m;
+  const deadline = getCheckinDeadline();
+  return nowMin >= CONFIG.checkinStart * 60 && nowMin < deadline * 60;
+}
+
+function canCheckout() {
+  const now = state.now;
+  const h = now.getHours(), m = now.getMinutes();
+  const nowMin = h * 60 + m;
+  return nowMin >= CONFIG.checkoutStart * 60 && nowMin < CONFIG.checkoutDeadline * 60;
+}
+
+function isLate() {
+  const now = state.now;
+  const h = now.getHours(), m = now.getMinutes();
+  const nowMin = h * 60 + m;
+  return nowMin > getCheckinSoft() * 60;
+}
+
+function updateButtonStates() {
+  const checkinBtn = document.getElementById('btnCheckin');
+  const checkoutBtn = document.getElementById('btnCheckout');
+  const checkinHint = document.getElementById('checkinHint');
+  const checkoutHint = document.getElementById('checkoutHint');
+  const statusEl = document.getElementById('statusMsg');
+
+  const hasCheckin = state.todayRecords.find(r => r.type === '签到');
+  const hasCheckout = state.todayRecords.find(r => r.type === '签退');
+  const userOK = state.userName && state.userRole;
+
+  // --- Check-in button ---
+  checkinBtn.disabled = false;
+  checkinHint.textContent = '';
+
+  if (hasCheckout) {
+    // 今日已完成签退，不可再签
+    checkinBtn.disabled = true;
+    checkinHint.textContent = '已完成';
+  } else if (!userOK) {
+    // 没选姓名或岗位
+    checkinBtn.disabled = true;
+  } else if (hasCheckin) {
+    // 已签到不能再签
+    checkinBtn.disabled = true;
+    checkinHint.textContent = '已签到';
+  } else if (state.locStatus !== 'ok') {
+    // 定位不在范围内或未获取
+    checkinBtn.disabled = true;
+    checkinHint.textContent = '定位超出范围';
+  } else if (!canCheckin()) {
+    // 时间不允许（仅正式模式会到这里，测试模式 canCheckin 永远 true）
+    checkinBtn.disabled = true;
+    const now = state.now;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const deadline = getCheckinDeadline();
+    if (nowMin >= deadline * 60) {
+      checkinHint.textContent = '已截止';
+    } else {
+      checkinHint.textContent = '未开始';
+    }
+  }
+
+  // --- Checkout button ---
+  checkoutBtn.disabled = false;
+  checkoutHint.textContent = '';
+
+  if (hasCheckout) {
+    checkoutBtn.disabled = true;
+    checkoutHint.textContent = '已完成';
+  } else if (!userOK) {
+    checkoutBtn.disabled = true;
+  } else if (!hasCheckin) {
+    checkoutBtn.disabled = true;
+    checkoutHint.textContent = '请先签到';
+  } else if (state.locStatus !== 'ok') {
+    checkoutBtn.disabled = true;
+    checkoutHint.textContent = '定位超出范围';
+  } else if (!canCheckout()) {
+    checkoutBtn.disabled = true;
+    checkoutHint.textContent = '未到时间';
+    // 显示距签退倒计时
+    const now = state.now;
+    const h = now.getHours(), m = now.getMinutes();
+    const nowMin = h * 60 + m;
+    const targetMin = CONFIG.checkoutStart * 60;
+    const diff = targetMin - nowMin;
+    if (diff > 0) {
+      const dh = Math.floor(diff / 60);
+      const dm = diff % 60;
+      document.getElementById('checkoutCountdown').textContent = `⏱️ 距签退还有 ${dh}小时${dm}分`;
+      document.getElementById('checkoutCountdown').className = 'countdown active';
+    }
+  } else {
+    // 签退时间已到，清除倒计时
+    document.getElementById('checkoutCountdown').textContent = '✅ 可签退';
+    document.getElementById('checkoutCountdown').className = 'countdown active';
+  }
+
+  // Status message
+  let msg = '';
+  if (!state.campus) {
+    msg = '<div class="status-denied">⚠️ 请先选择校区</div>';
+  } else if (!userOK) {
+    msg = '<div class="status-denied">⚠️ 请选择姓名</div>';
+  } else if (hasCheckin && !hasCheckout) {
+    const late = isLate() && !state._lateShown;
+    if (late) {
+      const now = state.now;
+      const lateMin = now.getHours() * 60 + now.getMinutes() - getCheckinSoft() * 60;
+      msg = `<div class="status-late">⏰ 你已迟到约${lateMin}分钟，下次请早到哦</div>`;
+      state._lateShown = true;
+    }
+  }
+  statusEl.innerHTML = msg;
+}
+
+function doCheckin() {
+  // 地理围栏校验（严格模式：超出100米或定位未获取则不能签到）
+  if (state.locStatus !== 'ok') {
+    showToast('❌ 定位未在校区范围内，无法签到');
+    return;
+  }
+  if (!canCheckin()) {
+    const deadline = getCheckinDeadline();
+    const deadlineStr = `${Math.floor(deadline)}:${(deadline % 1) * 60 === 0 ? '00' : '30'}`;
+    showToast(`⛔ 签到已截止（${deadlineStr}后不可签到）`);
+    return;
+  }
+
+  const now = state.now;
+
+  let lateMin = now.getHours() * 60 + now.getMinutes() - getCheckinSoft() * 60;
+
+  const record = makeRecord('签到');
+  saveRecord(record);
+
+  if (lateMin > 0) {
+    showToast(`✅ 签到成功（迟到约${lateMin}分钟）`);
+  } else {
+    showToast('✅ 签到成功！开始美好的一天 🌟');
+  }
+
+  renderRecords();
+  updateButtonStates();
+  syncToServer(record);
+}
+
+function doCheckout() {
+  // 地理围栏校验（严格模式：超出100米或定位未获取则不能签退）
+  if (state.locStatus !== 'ok') {
+    showToast('❌ 定位未在校区范围内，无法签退');
+    return;
+  }
+  if (!canCheckout()) {
+    const now = state.now;
+    if (now.getHours() >= CONFIG.checkoutDeadline) {
+      showToast('⛔ 签退已截止（20:00后不可签退）');
+    } else {
+      showToast('⏰ 签退时间为17:00-20:00，请耐心等待');
+    }
+    return;
+  }
+
+  const record = makeRecord('签退');
+  saveRecord(record);
+
+  // Show thank-you overlay
+  const name = state.userName;
+  const timeStr = nowStr();
+  document.getElementById('thankName').textContent = name;
+  document.getElementById('thankTime').textContent = `签退时间：${timeStr}`;
+  document.getElementById('thankOverlay').classList.remove('hidden');
+
+  renderRecords();
+  updateButtonStates();
+  syncToServer(record);
+}
+
+function makeRecord(type) {
+  const now = state.now;
+  return {
+    id: Date.now(),
+    type,
+    name: state.userName,
+    role: state.userRole,
+    campus: state.campus,
+    campusName: state.campus ? CONFIG.campuses[state.campus].name : '',
+    time: now.toISOString(),
+    timeStr: nowStr(),
+    date: now.toISOString().split('T')[0],
+    lat: state.location ? state.location.lat : 0,
+    lng: state.location ? state.location.lng : 0,
+    accuracy: state.location ? Math.round(state.location.accuracy) : 0,
+    distance: state.locDistance ? Math.round(state.locDistance) : null
+  };
+}
+
+function nowStr() {
+  const n = state.now;
+  return `${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}`;
+}
+
+// ============================================================
+// RECORDS
+// ============================================================
+function getRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(CONFIG.storageKey + '_records') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveRecord(record) {
+  const records = getRecords();
+  records.push(record);
+  localStorage.setItem(CONFIG.storageKey + '_records', JSON.stringify(records));
+  if (record.date === state.now.toISOString().split('T')[0]) {
+    state.todayRecords.push(record);
+  }
+}
+
+function renderRecords() {
+  const today = state.now.toISOString().split('T')[0];
+  const name = state.userName;
+  const records = getRecords().filter(r => r.date === today && r.name === name);
+  state.todayRecords = records;
+
+  const container = document.getElementById('recordsList');
+  if (records.length === 0) {
+    container.innerHTML = '<div class="no-record">今日暂无打卡记录</div>';
+    return;
+  }
+
+  container.innerHTML = records.map(r => `
+    <div class="record-item">
+      <div class="record-badge ${r.type === '签到' ? 'in' : 'out'}">${r.type}</div>
+      <div class="record-time">${r.timeStr}</div>
+      <div class="record-meta">${r.campusName}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// SYNC
+// ============================================================
+const API_ENDPOINT = '';
+
+async function syncToServer(record) {
+  const queue = JSON.parse(localStorage.getItem(CONFIG.storageKey + '_queue') || '[]');
+  queue.push(record);
+  localStorage.setItem(CONFIG.storageKey + '_queue', JSON.stringify(queue));
+
+  if (!API_ENDPOINT) return;
+
+  try {
+    const resp = await fetch(API_ENDPOINT + '/api/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    });
+    if (resp.ok) {
+      const q = JSON.parse(localStorage.getItem(CONFIG.storageKey + '_queue') || '[]');
+      const filtered = q.filter(r => r.id !== record.id);
+      localStorage.setItem(CONFIG.storageKey + '_queue', JSON.stringify(filtered));
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// THANK YOU OVERLAY
+// ============================================================
+function closeThank() {
+  document.getElementById('thankOverlay').classList.add('hidden');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(message) {
+  const container = document.createElement('div');
+  container.className = 'toast';
+  container.textContent = message;
+  document.body.appendChild(container);
+  setTimeout(() => {
+    container.style.opacity = '0';
+    container.style.transition = 'opacity 0.3s';
+    setTimeout(() => container.remove(), 300);
+  }, 2500);
+}
+</script>
+</body>
+</html>
