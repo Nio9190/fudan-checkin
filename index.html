@@ -217,6 +217,19 @@
   .btn-action .icon { font-size: 28px; }
   .btn-action .label { font-size: 16px; }
   .btn-action .hint { font-size: 10px; opacity: 0.75; }
+  .btn-action .hint.loc-error {
+    font-size: 13px;
+    color: #c0392b;
+    opacity: 1;
+    font-weight: 700;
+    display: block;
+    margin-top: 2px;
+    animation: hintBlink 1.2s ease-in-out infinite;
+  }
+  @keyframes hintBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
   .btn-checkin { background: linear-gradient(135deg, #3a7d44, #48a254); box-shadow: 0 4px 16px rgba(58,125,68,0.3); }
   .btn-checkout { background: linear-gradient(135deg, var(--primary), var(--primary-light)); box-shadow: 0 4px 16px rgba(26,111,196,0.3); }
   .countdown {
@@ -297,6 +310,21 @@
     text-align: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     line-height: 1.5;
+  }
+  .toast.alert-toast {
+    background: #c0392b;
+    color: #fff;
+    font-size: 18px;
+    padding: 16px 30px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 6px 30px rgba(192,57,43,0.5);
+    animation: alertToastIn 0.4s ease;
+    line-height: 1.6;
+  }
+  @keyframes alertToastIn {
+    from { opacity:0; transform: translateX(-50%) translateY(-20px) scale(0.8); }
+    to { opacity:1; transform: translateX(-50%) translateY(0) scale(1); }
   }
   @keyframes toastIn {
     from { opacity:0; transform: translateX(-50%) translateY(-10px); }
@@ -849,6 +877,7 @@ function updateButtonStates() {
   // --- Check-in button ---
   checkinBtn.disabled = false;
   checkinHint.textContent = '';
+  checkinHint.className = 'hint';
 
   if (hasCheckout) {
     // 今日已完成签退，不可再签
@@ -864,7 +893,8 @@ function updateButtonStates() {
   } else if (state.locStatus !== 'ok') {
     // 定位不在范围内或未获取
     checkinBtn.disabled = true;
-    checkinHint.textContent = '定位超出范围';
+    checkinHint.textContent = '⛔ 不在暑托班工作区域内，请在工作区内打卡';
+    checkinHint.className = 'hint loc-error';
   } else if (!canCheckin()) {
     // 时间不允许（仅正式模式会到这里，测试模式 canCheckin 永远 true）
     checkinBtn.disabled = true;
@@ -881,6 +911,7 @@ function updateButtonStates() {
   // --- Checkout button ---
   checkoutBtn.disabled = false;
   checkoutHint.textContent = '';
+  checkoutHint.className = 'hint';
 
   if (hasCheckout) {
     checkoutBtn.disabled = true;
@@ -892,7 +923,8 @@ function updateButtonStates() {
     checkoutHint.textContent = '请先签到';
   } else if (state.locStatus !== 'ok') {
     checkoutBtn.disabled = true;
-    checkoutHint.textContent = '定位超出范围';
+    checkoutHint.textContent = '⛔ 不在暑托班工作区域内，请在工作区内打卡';
+    checkoutHint.className = 'hint loc-error';
   } else if (!canCheckout()) {
     checkoutBtn.disabled = true;
     checkoutHint.textContent = '未到时间';
@@ -935,7 +967,7 @@ function updateButtonStates() {
 function doCheckin() {
   // 地理围栏校验（严格模式：超出100米或定位未获取则不能签到）
   if (state.locStatus !== 'ok') {
-    showToast('❌ 定位未在校区范围内，无法签到');
+    showAlertToast('⛔ 不在暑托班工作区域内！\n请在工作区内打卡签到');
     return;
   }
   if (!canCheckin()) {
@@ -966,7 +998,7 @@ function doCheckin() {
 function doCheckout() {
   // 地理围栏校验（严格模式：超出100米或定位未获取则不能签退）
   if (state.locStatus !== 'ok') {
-    showToast('❌ 定位未在校区范围内，无法签退');
+    showAlertToast('⛔ 不在暑托班工作区域内！\n请在工作区内打卡签退');
     return;
   }
   if (!canCheckout()) {
@@ -1103,6 +1135,19 @@ function showToast(message) {
     container.style.transition = 'opacity 0.3s';
     setTimeout(() => container.remove(), 300);
   }, 2500);
+}
+
+function showAlertToast(message) {
+  const container = document.createElement('div');
+  container.className = 'toast alert-toast';
+  container.textContent = message;
+  document.body.appendChild(container);
+  // 醒目弹窗显示5秒，更长更醒目
+  setTimeout(() => {
+    container.style.opacity = '0';
+    container.style.transition = 'opacity 0.5s';
+    setTimeout(() => container.remove(), 500);
+  }, 5000);
 }
 </script>
 </body>
