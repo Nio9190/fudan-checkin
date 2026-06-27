@@ -462,7 +462,7 @@ const CONFIG = {
       checkinDeadline: 9,      // 9:00 签到截止
     }
   },
-  geoFenceRadius: 100,      // 地理围栏半径（米），超出显示警告但不阻断
+  geoFenceRadius: 99999,    // 地理围栏已取消，仅显示距离供参考
   checkinStart: 7,            // 7:00 允许开始签到
   checkoutStart: 17,          // 17:00 允许签退
   checkoutDeadline: 20,       // 20:00 签退截止
@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // 定位：100米围栏严格模式（超出范围或定位未获取则不能打卡）
+  // 定位：仅显示距离供参考，不限制打卡
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(res => {
       if (res.state === 'granted') {
@@ -732,7 +732,7 @@ function selectCampus(campus, silent) {
 // ============================================================
 // LOCATION
 // ============================================================
-// 获取定位（100米围栏严格模式：超出范围或定位失败则不能打卡）
+// 获取定位（仅显示距离供参考，不限制打卡）
 function requestLocation() {
   setLocStatus('loading', '正在获取定位…');
   if (!navigator.geolocation) {
@@ -786,7 +786,7 @@ function evaluateLocation() {
   if (dist <= CONFIG.geoFenceRadius) {
     setLocStatus('ok', `✅ 已定位 · ${camp.name} · 精度${state.location.accuracy.toFixed(0)}米 · 距中心${dist.toFixed(0)}米`);
   } else {
-    setLocStatus('warn', `⚠️ 距${camp.name}中心${dist.toFixed(0)}米，超出${CONFIG.geoFenceRadius}米范围，不能打卡`);
+    setLocStatus('warn', `ℹ️ 距${camp.name}中心约${dist.toFixed(0)}米（定位仅供参考，不限制打卡）`);
   }
 }
 
@@ -866,9 +866,6 @@ function updateButtonStates() {
     // 已签到不能再签
     checkinBtn.disabled = true;
     checkinHint.textContent = '已签到';
-  } else if (state.locStatus !== 'ok') {
-    // 定位不在范围内或未获取——按钮禁用，点击时弹窗提示
-    checkinBtn.disabled = true;
   } else if (!canCheckin()) {
     // 时间不允许（仅正式模式会到这里，测试模式 canCheckin 永远 true）
     checkinBtn.disabled = true;
@@ -895,8 +892,6 @@ function updateButtonStates() {
   } else if (!hasCheckin) {
     checkoutBtn.disabled = true;
     checkoutHint.textContent = '请先签到';
-  } else if (state.locStatus !== 'ok') {
-    checkoutBtn.disabled = true;
   } else if (!canCheckout()) {
     checkoutBtn.disabled = true;
     checkoutHint.textContent = '未到时间';
@@ -937,11 +932,6 @@ function updateButtonStates() {
 }
 
 function doCheckin() {
-  // 地理围栏校验（严格模式：超出100米或定位未获取则不能签到）
-  if (state.locStatus !== 'ok') {
-    showToast('⚠️ 请在工作区域内打卡');
-    return;
-  }
   if (!canCheckin()) {
     const deadline = getCheckinDeadline();
     const deadlineStr = `${Math.floor(deadline)}:${(deadline % 1) * 60 === 0 ? '00' : '30'}`;
@@ -956,7 +946,9 @@ function doCheckin() {
   const record = makeRecord('签到');
   saveRecord(record);
 
-  if (lateMin > 0) {
+  if (!state.location) {
+    showToast('✅ 签到成功！⚠️ 未获取定位，数据不含位置信息');
+  } else if (lateMin > 0) {
     showToast(`✅ 签到成功（迟到约${lateMin}分钟）`);
   } else {
     showToast('✅ 签到成功！开始美好的一天 🌟');
@@ -968,11 +960,6 @@ function doCheckin() {
 }
 
 function doCheckout() {
-  // 地理围栏校验（严格模式：超出100米或定位未获取则不能签退）
-  if (state.locStatus !== 'ok') {
-    showToast('⚠️ 请在工作区域内打卡');
-    return;
-  }
   if (!canCheckout()) {
     const now = state.now;
     if (now.getHours() >= CONFIG.checkoutDeadline) {
@@ -981,6 +968,11 @@ function doCheckout() {
       showToast('⏰ 签退时间为17:00-20:00，请耐心等待');
     }
     return;
+  }
+
+  // 定位提醒（不阻断打卡）
+  if (!state.location) {
+    showToast('⚠️ 未获取定位，签退数据不含位置信息');
   }
 
   const record = makeRecord('签退');
@@ -1098,6 +1090,9 @@ function closeThank() {
 // TOAST
 // ============================================================
 function showToast(message) {
+  // 移除已有 toast，防止多条重叠
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+
   const container = document.createElement('div');
   container.className = 'toast';
   container.textContent = message;
