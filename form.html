@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>考勤确认 · 复旦暑托班</title>
+<style>
+  :root {
+    --primary: #1a6fc4;
+    --primary-light: #2080d8;
+    --primary-bg: #f0f6ff;
+    --accent: #4990e2;
+    --success: #3a7d44;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #2c2c2c;
+    --text-secondary: #7a7268;
+    --border: #dce3ed;
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 22px;
+    max-width: 400px; width: 100%;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .card-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .card-header .icon { font-size: 40px; margin-bottom: 8px; }
+  .card-header h2 { font-size: 18px; color: var(--primary); font-weight: 700; }
+  .card-header .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .field .value {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .field .value.highlight {
+    background: #f0faf2;
+    border-color: #a5d6a7;
+    color: var(--success);
+  }
+
+  .btn-submit {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.15s, opacity 0.2s;
+    color: white;
+  }
+  .btn-submit:active { transform: scale(0.96); }
+  .btn-submit.checkin { background: linear-gradient(135deg, #3a7d44, #48a254); box-shadow: 0 4px 16px rgba(58,125,68,0.3); }
+  .btn-submit.checkout { background: linear-gradient(135deg, var(--primary), var(--primary-light)); box-shadow: 0 4px 16px rgba(26,111,196,0.3); }
+
+  .btn-back {
+    width: 100%;
+    height: 42px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .success-overlay {
+    position: fixed; inset:0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .success-overlay.hidden { display: none; }
+  .success-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 340px; width: 100%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    animation: popIn 0.3s ease;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .success-card .emoji { font-size: 48px; margin-bottom: 12px; }
+  .success-card h3 { font-size: 20px; color: var(--primary); margin-bottom: 8px; }
+  .success-card .detail { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
+  .success-card .detail .name { font-weight: 700; color: var(--text); }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 12px 22px;
+    border-radius: 24px; font-size: 14px; font-weight: 600;
+    z-index: 9999; max-width: 90vw; text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    animation: toastIn 0.3s ease;
+  }
+  @keyframes toastIn {
+    from { opacity:0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity:1; transform: translateX(-50%) translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+  <div class="card-header">
+    <div class="icon" id="headerIcon">📋</div>
+    <h2 id="headerTitle">考勤确认</h2>
+    <div class="sub">请确认以下信息后提交</div>
+  </div>
+
+  <div class="field">
+    <label>类型</label>
+    <div class="value highlight" id="fieldType">—</div>
+  </div>
+  <div class="field">
+    <label>日期</label>
+    <div class="value" id="fieldDate">—</div>
+  </div>
+  <div class="field">
+    <label>校区</label>
+    <div class="value" id="fieldCampus">—</div>
+  </div>
+  <div class="field">
+    <label>岗位</label>
+    <div class="value" id="fieldRole">—</div>
+  </div>
+  <div class="field">
+    <label>姓名</label>
+    <div class="value" id="fieldName">—</div>
+  </div>
+  <div class="field">
+    <label>打卡时间</label>
+    <div class="value" id="fieldTime">—</div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="submitForm()">✅ 确认提交</button>
+  <button class="btn-back" onclick="goBack()">← 返回打卡页面</button>
+</div>
+
+<div class="success-overlay hidden" id="successOverlay">
+  <div class="success-card">
+    <div class="emoji">🎉</div>
+    <h3>提交成功！</h3>
+    <div class="detail">
+      <span class="name" id="successName"></span><br>
+      <span id="successDetail"></span>
+    </div>
+    <div class="detail" style="font-size:12px;color:#b0a89e;margin-top:8px;">
+      数据已保存，可返回打卡页面继续操作
+    </div>
+    <button class="btn-submit" id="btnSuccessOk" onclick="closeSuccess()" style="margin-top:16px;">好的，返回打卡页面</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Read URL params
+// ============================================================
+const params = new URLSearchParams(window.location.search);
+const record = {
+  type: params.get('type') || '',
+  date: params.get('date') || '',
+  campus: params.get('campus') || '',
+  role: params.get('role') || '',
+  name: params.get('name') || '',
+  time: params.get('time') || '',
+  lat: params.get('lat') || '',
+  lng: params.get('lng') || '',
+  accuracy: params.get('accuracy') || '',
+  distance: params.get('distance') || '',
+  id: Date.now()
+};
+
+// ============================================================
+// Init
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // If no data, show error
+  if (!record.type || !record.name) {
+    document.getElementById('headerTitle').textContent = '无法获取打卡数据';
+    document.getElementById('headerIcon').textContent = '⚠️';
+    document.getElementById('btnSubmit').style.display = 'none';
+    document.getElementById('fieldType').textContent = '请从打卡页面进入';
+    document.getElementById('fieldType').className = 'value';
+    return;
+  }
+
+  // Fill fields
+  document.getElementById('fieldType').textContent = record.type;
+  document.getElementById('fieldDate').textContent = record.date;
+  document.getElementById('fieldCampus').textContent = record.campus;
+  document.getElementById('fieldRole').textContent = record.role;
+  document.getElementById('fieldName').textContent = record.name;
+  document.getElementById('fieldTime').textContent = record.time;
+
+  // Style based on type
+  const btn = document.getElementById('btnSubmit');
+  if (record.type === '签退') {
+    btn.className = 'btn-submit checkout';
+    btn.textContent = '✅ 确认签退';
+    document.getElementById('headerIcon').textContent = '🚪';
+    document.getElementById('headerTitle').textContent = '签退确认';
+    document.getElementById('fieldType').className = 'value';
+    document.getElementById('fieldType').style.background = '#e3f0fd';
+    document.getElementById('fieldType').style.borderColor = '#a0c8f0';
+    document.getElementById('fieldType').style.color = '#1a6fc4';
+  } else {
+    btn.className = 'btn-submit checkin';
+    btn.textContent = '✅ 确认签到';
+  }
+});
+
+// ============================================================
+// Submit
+// ============================================================
+function submitForm() {
+  // Save to localStorage (mirrors check-in page format)
+  const storageKey = 'fudan_attendance_v3';
+  const records = JSON.parse(localStorage.getItem(storageKey + '_records') || '[]');
+  const existing = records.find(r => r.id === record.id);
+  if (!existing) {
+    records.push({
+      id: record.id,
+      type: record.type,
+      name: record.name,
+      role: record.role,
+      campus: record.campus === '邯郸校区' ? 'handan' : 'fenglin',
+      campusName: record.campus,
+      time: new Date().toISOString(),
+      timeStr: record.time,
+      date: record.date,
+      lat: parseFloat(record.lat) || 0,
+      lng: parseFloat(record.lng) || 0,
+      accuracy: parseInt(record.accuracy) || 0,
+      distance: record.distance ? parseInt(record.distance) : null
+    });
+    localStorage.setItem(storageKey + '_records', JSON.stringify(records));
+  }
+
+  // Save to pending sync queue
+  const pendingSync = JSON.parse(localStorage.getItem(storageKey + '_pending_sync') || '[]');
+  pendingSync.push({
+    type: record.type,
+    date: record.date,
+    campus: record.campus,
+    role: record.role,
+    name: record.name,
+    time: record.time,
+    id: record.id
+  });
+  localStorage.setItem(storageKey + '_pending_sync', JSON.stringify(pendingSync));
+
+  // Show success overlay
+  document.getElementById('successName').textContent = record.name;
+  const detailText = record.type === '签到'
+    ? `签到成功！${record.campus} · ${record.time}`
+    : `签退成功！${record.campus} · ${record.time}`;
+  document.getElementById('successDetail').textContent = detailText;
+  document.getElementById('successOverlay').classList.remove('hidden');
+
+  // Disable submit button to prevent double-submit
+  document.getElementById('btnSubmit').disabled = true;
+  document.getElementById('btnSubmit').textContent = '✅ 已提交';
+  document.getElementById('btnSubmit').style.opacity = '0.6';
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+function closeSuccess() {
+  // Go back to the check-in page
+  window.location.href = 'index.html';
+}
+
+function goBack() {
+  if (confirm('确定要返回打卡页面吗？当前信息尚未提交。')) {
+    window.location.href = 'index.html';
+  }
+}
+
+// Pre-submit: if user comes from check-in page and the data looks valid, auto-focus submit
+document.getElementById('btnSubmit').focus();
+</script>
+</body>
+</html>
