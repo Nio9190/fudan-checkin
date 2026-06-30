@@ -2,13 +2,15 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>数据管理 · 复旦暑托班考勤</title>
 <style>
   :root {
     --primary: #1a6fc4;
     --primary-light: #2080d8;
     --success: #3a7d44;
+    --danger: #c0392b;
+    --warn: #c9a94e;
     --bg: #f4f7fb;
     --card: #ffffff;
     --text: #2c2c2c;
@@ -65,6 +67,43 @@
   .stat-num { font-size: 24px; font-weight: 700; color: var(--primary); }
   .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar input, .toolbar select {
+    flex: 1;
+    min-width: 120px;
+    height: 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .btn {
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: white;
+    transition: transform 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+  .btn-success { background: linear-gradient(135deg, #3a7d44, #48a254); }
+  .btn-outline {
+    background: var(--card);
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border);
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -91,47 +130,10 @@
   .badge.in { background: #e8f5e9; color: var(--success); }
   .badge.out { background: #e3f0fd; color: var(--primary); }
 
-  .btn {
-    width: 100%;
-    height: 44px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 8px;
-    color: white;
-    transition: transform 0.15s;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
-  .btn-success { background: linear-gradient(135deg, #3a7d44, #48a254); }
-  .btn-outline {
-    background: var(--card);
-    color: var(--text-secondary);
-    border: 1.5px solid var(--border);
-  }
-  .btn-danger {
-    background: var(--card);
-    color: #c0392b;
-    border: 1.5px solid #f0c0b8;
-  }
-
-  .json-box {
-    width: 100%;
-    min-height: 120px;
-    max-height: 300px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    font-size: 11px;
-    font-family: "SF Mono", "Consolas", monospace;
-    background: var(--bg);
-    color: var(--text);
-    resize: vertical;
-    overflow: auto;
-    word-break: break-all;
-  }
+  .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px; }
+  .hint { font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+  .error { color: var(--danger); font-size: 13px; text-align: center; padding: 12px; }
+  .loading { color: var(--text-secondary); text-align: center; padding: 20px; font-size: 13px; }
 
   .toast {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -146,190 +148,242 @@
     to { opacity:1; transform: translateX(-50%) translateY(0); }
   }
 
-  .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px; }
-  .hint { font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .summary-item {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .summary-item .num { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .summary-item .label { font-size: 11px; color: var(--text-secondary); }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>📋 考勤数据管理</h1>
-  <div class="sub">复旦暑托班工作人员考勤系统</div>
+  <div class="sub">复旦暑托班工作人员考勤系统 · 后台统计</div>
+</div>
+
+<!-- 设置后端地址 -->
+<div class="card">
+  <div class="card-title">🔧 后端地址</div>
+  <div class="toolbar" style="margin-bottom:0;">
+    <input type="text" id="apiUrl" placeholder="https://fudan-checkin-backend.xxx.workers.dev" style="flex:3;">
+    <button class="btn btn-primary" onclick="loadData()">刷新数据</button>
+  </div>
+  <p class="hint">把 Cloudflare Worker 的 URL 填在这里，点击"刷新数据"即可查看后台统计。</p>
 </div>
 
 <!-- Stats -->
 <div class="card">
-  <div class="card-title">📊 统计</div>
+  <div class="card-title">📊 实时统计</div>
   <div class="stat-row">
     <div class="stat-box">
       <div class="stat-num" id="statTotal">0</div>
-      <div class="stat-label">总记录数</div>
+      <div class="stat-label">总记录</div>
     </div>
     <div class="stat-box">
       <div class="stat-num" id="statCheckin">0</div>
-      <div class="stat-label">签到次数</div>
+      <div class="stat-label">签到</div>
     </div>
     <div class="stat-box">
       <div class="stat-num" id="statCheckout">0</div>
-      <div class="stat-label">签退次数</div>
+      <div class="stat-label">签退</div>
     </div>
   </div>
+  <div class="summary-grid" id="summaryGrid"></div>
 </div>
 
 <!-- Records Table -->
 <div class="card">
   <div class="card-title">📝 打卡记录</div>
+  <div class="toolbar">
+    <input type="date" id="filterDate" onchange="renderTable()">
+    <select id="filterCampus" onchange="renderTable()">
+      <option value="">全部校区</option>
+      <option value="handan">邯郸校区</option>
+      <option value="fenglin">枫林校区</option>
+      <option value="邯郸校区">邯郸校区</option>
+      <option value="枫林校区">枫林校区</option>
+    </select>
+    <select id="filterType" onchange="renderTable()">
+      <option value="">全部类型</option>
+      <option value="签到">签到</option>
+      <option value="签退">签退</option>
+    </select>
+    <button class="btn btn-success" onclick="exportCSV()">导出 CSV</button>
+  </div>
   <div id="recordsTable">
-    <div class="empty">暂无记录</div>
+    <div class="loading">点击"刷新数据"加载后台记录</div>
   </div>
 </div>
 
-<!-- Export -->
-<div class="card">
-  <div class="card-title">📤 数据导出与同步</div>
-  <p class="hint">点击下方按钮复制所有记录数据，然后发送给 Jason（通过微信），由 Jason 同步到腾讯文档智能表。</p>
-  <button class="btn btn-primary" onclick="copyAllRecords()">📋 复制全部记录 (JSON)</button>
-  <button class="btn btn-success" onclick="copyPendingSync()" style="margin-top:8px;">📋 复制待同步数据</button>
-  <div style="margin-top:12px;">
-    <textarea class="json-box" id="jsonOutput" readonly placeholder="点击上方按钮后，数据会显示在这里..."></textarea>
-  </div>
-</div>
-
-<!-- Clear -->
-<div class="card">
-  <div class="card-title">⚠️ 数据管理</div>
-  <p class="hint">数据同步完成后，可以清除本设备的记录。此操作不可恢复，请确认数据已备份。</p>
-  <button class="btn btn-outline" onclick="clearSynced()">🧹 清除已同步的记录</button>
-  <button class="btn btn-danger" onclick="clearAll()">🗑️ 清除全部记录</button>
-</div>
-
-<button class="btn btn-outline" onclick="location.href='index.html'" style="margin-bottom:20px;">← 返回打卡页面</button>
+<button class="btn btn-outline" onclick="location.href='index.html'" style="margin-bottom:20px;width:100%;">← 返回打卡页面</button>
 
 <script>
-const STORAGE_KEY = 'fudan_attendance_v3';
+// ============================================================
+// CONFIG —— 把 Worker URL 填在这里
+// ============================================================
+// 默认值会被自动保存到 localStorage，下次打开不用重新填
 
-function getRecords() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY + '_records') || '[]');
-  } catch(e) { return []; }
+let allRecords = [];
+let stats = {};
+
+function getApiUrl() {
+  const input = document.getElementById('apiUrl').value.trim();
+  if (input) {
+    localStorage.setItem('fudan_checkin_api_url', input);
+    return input.replace(/\/$/, '');
+  }
+  const saved = localStorage.getItem('fudan_checkin_api_url');
+  if (saved) return saved.replace(/\/$/, '');
+  return '';
 }
 
-function getPendingSync() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY + '_pending_sync') || '[]');
-  } catch(e) { return []; }
+function initApiUrl() {
+  const saved = localStorage.getItem('fudan_checkin_api_url');
+  if (saved) document.getElementById('apiUrl').value = saved;
 }
 
-function init() {
-  const records = getRecords();
-  const pending = getPendingSync();
+async function loadData() {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) {
+    showToast('请先填写后端地址');
+    return;
+  }
 
-  // Stats
-  document.getElementById('statTotal').textContent = records.length;
-  document.getElementById('statCheckin').textContent = records.filter(r => r.type === '签到').length;
-  document.getElementById('statCheckout').textContent = records.filter(r => r.type === '签退').length;
+  document.getElementById('recordsTable').innerHTML = '<div class="loading">正在加载...</div>';
 
-  // Table
+  try {
+    // 获取统计数据
+    const statsResp = await fetch(apiUrl + '/api/stats');
+    stats = await statsResp.json();
+
+    // 获取记录列表
+    const recordsResp = await fetch(apiUrl + '/api/records');
+    const data = await recordsResp.json();
+    allRecords = data.records || [];
+
+    renderStats();
+    renderTable();
+    showToast(`已加载 ${allRecords.length} 条记录`);
+  } catch (err) {
+    document.getElementById('recordsTable').innerHTML = `<div class="error">加载失败：${err.message}<br>请检查后端地址是否正确</div>`;
+    showToast('加载失败，请检查后端地址');
+  }
+}
+
+function renderStats() {
+  if (!stats.ok) return;
+
+  document.getElementById('statTotal').textContent = stats.total || 0;
+  document.getElementById('statCheckin').textContent = stats.checkin || 0;
+  document.getElementById('statCheckout').textContent = stats.checkout || 0;
+
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = '';
+
+  // 按日期统计
+  Object.entries(stats.byDate || {}).forEach(([date, s]) => {
+    grid.innerHTML += `
+      <div class="summary-item">
+        <div class="num">${s.total}</div>
+        <div class="label">${date}<br>签${s.checkin}/退${s.checkout}</div>
+      </div>
+    `;
+  });
+
+  // 按校区统计
+  Object.entries(stats.byCampus || {}).forEach(([campus, s]) => {
+    grid.innerHTML += `
+      <div class="summary-item">
+        <div class="num">${s.total}</div>
+        <div class="label">${campus}<br>签${s.checkin}/退${s.checkout}</div>
+      </div>
+    `;
+  });
+}
+
+function renderTable() {
   const container = document.getElementById('recordsTable');
-  if (records.length === 0) {
+
+  const dateFilter = document.getElementById('filterDate').value;
+  const campusFilter = document.getElementById('filterCampus').value;
+  const typeFilter = document.getElementById('filterType').value;
+
+  let filtered = allRecords;
+  if (dateFilter) {
+    filtered = filtered.filter(r => (r.date || r._serverReceivedAt?.slice(0, 10)) === dateFilter);
+  }
+  if (campusFilter) {
+    filtered = filtered.filter(r => (r.campusName || r.campus) === campusFilter || r.campus === campusFilter);
+  }
+  if (typeFilter) {
+    filtered = filtered.filter(r => r.type === typeFilter);
+  }
+
+  if (filtered.length === 0) {
     container.innerHTML = '<div class="empty">暂无记录</div>';
     return;
   }
 
-  // Sort by date/time descending
-  records.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-  let html = '<table><thead><tr><th>类型</th><th>姓名</th><th>校区</th><th>日期</th><th>时间</th></tr></thead><tbody>';
-  records.forEach(r => {
+  let html = '<table><thead><tr><th>类型</th><th>姓名</th><th>岗位</th><th>校区</th><th>日期</th><th>时间</th></tr></thead><tbody>';
+  filtered.forEach(r => {
     const badgeClass = r.type === '签到' ? 'in' : 'out';
-    const campus = r.campusName || (r.campus === 'handan' ? '邯郸' : '枫林');
+    const campus = r.campusName || (r.campus === 'handan' ? '邯郸校区' : r.campus === 'fenglin' ? '枫林校区' : r.campus);
     html += `<tr>
       <td><span class="badge ${badgeClass}">${r.type}</span></td>
       <td>${r.name}</td>
+      <td>${r.role || ''}</td>
       <td>${campus}</td>
-      <td>${r.date || ''}</td>
-      <td>${r.timeStr || ''}</td>
+      <td>${r.date || r._serverReceivedAt?.slice(0, 10) || ''}</td>
+      <td>${r.timeStr || r.time?.slice(11, 16) || ''}</td>
     </tr>`;
   });
   html += '</tbody></table>';
   container.innerHTML = html;
 }
 
-function copyAllRecords() {
-  const records = getRecords();
-  if (records.length === 0) {
-    showToast('没有记录可复制');
+function exportCSV() {
+  if (allRecords.length === 0) {
+    showToast('没有数据可导出');
     return;
   }
-  const data = records.map(r => ({
-    type: r.type,
-    date: r.date,
-    campus: r.campusName || (r.campus === 'handan' ? '邯郸校区' : '枫林校区'),
-    role: r.role,
-    name: r.name,
-    time: r.timeStr
-  }));
-  const json = JSON.stringify(data, null, 2);
-  document.getElementById('jsonOutput').value = json;
-  copyToClipboard(json);
-  showToast(`已复制 ${data.length} 条记录到剪贴板`);
-}
 
-function copyPendingSync() {
-  const pending = getPendingSync();
-  if (pending.length === 0) {
-    showToast('没有待同步的数据');
-    return;
-  }
-  const json = JSON.stringify(pending, null, 2);
-  document.getElementById('jsonOutput').value = json;
-  copyToClipboard(json);
-  showToast(`已复制 ${pending.length} 条待同步记录`);
-}
+  const dateFilter = document.getElementById('filterDate').value;
+  const campusFilter = document.getElementById('filterCampus').value;
+  const typeFilter = document.getElementById('filterType').value;
 
-function copyToClipboard(text) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
-}
+  let filtered = allRecords;
+  if (dateFilter) filtered = filtered.filter(r => (r.date || r._serverReceivedAt?.slice(0, 10)) === dateFilter);
+  if (campusFilter) filtered = filtered.filter(r => (r.campusName || r.campus) === campusFilter || r.campus === campusFilter);
+  if (typeFilter) filtered = filtered.filter(r => r.type === typeFilter);
 
-function fallbackCopy(text) {
-  const ta = document.getElementById('jsonOutput');
-  ta.value = text;
-  ta.select();
-  document.execCommand('copy');
-}
+  let csv = '\uFEFF类型,日期,时间,校区,岗位,姓名,纬度,经度,精度(米),距离(米)\n';
+  filtered.forEach(r => {
+    const campus = r.campusName || (r.campus === 'handan' ? '邯郸校区' : r.campus === 'fenglin' ? '枫林校区' : r.campus);
+    const date = r.date || r._serverReceivedAt?.slice(0, 10) || '';
+    const time = r.timeStr || r.time?.slice(11, 16) || '';
+    csv += `${r.type},${date},${time},${campus},${r.role || ''},${r.name},${r.lat || ''},${r.lng || ''},${r.accuracy || ''},${r.distance || ''}\n`;
+  });
 
-function clearSynced() {
-  const pending = getPendingSync();
-  if (pending.length === 0) {
-    showToast('没有待同步的记录');
-    return;
-  }
-  if (confirm(`确认清除 ${pending.length} 条已同步记录？此操作不可恢复。`)) {
-    localStorage.removeItem(STORAGE_KEY + '_pending_sync');
-    showToast('已清除待同步记录');
-    init();
-  }
-}
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `暑托班考勤_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 
-function clearAll() {
-  const records = getRecords();
-  if (records.length === 0) {
-    showToast('没有记录可清除');
-    return;
-  }
-  if (confirm(`⚠️ 确认清除全部 ${records.length} 条记录？\n\n此操作不可恢复！请确保数据已备份。`)) {
-    if (confirm(`再次确认：真的要删除全部 ${records.length} 条记录吗？`)) {
-      localStorage.removeItem(STORAGE_KEY + '_records');
-      localStorage.removeItem(STORAGE_KEY + '_pending_sync');
-      localStorage.removeItem(STORAGE_KEY + '_queue');
-      showToast('已清除全部记录');
-      init();
-    }
-  }
+  showToast(`已导出 ${filtered.length} 条记录`);
 }
 
 function showToast(msg) {
@@ -341,7 +395,7 @@ function showToast(msg) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2500);
 }
 
-init();
+initApiUrl();
 </script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+# Cloudflare Worker 部署配置
+# 步骤：
+# 1. 安装 wrangler: npm install -g wrangler
+# 2. 登录: wrangler login
+# 3. 创建 KV namespace: wrangler kv:namespace create "ATTENDANCE_KV"
+#    系统会返回 id，把下面的 id 字段替换掉
+# 4. 部署: wrangler deploy
+# 5. 部署成功后，wrangler 会显示 Worker URL
+# 6. 把 index.html 里的 API_ENDPOINT 改成该 URL
+
+name = "fudan-checkin-backend"
+main = "worker.js"
+compatibility_date = "2026-06-30"
+
+# 生产环境变量（可选）
+# [vars]
+# CORS_ORIGIN = "https://nio9190.github.io"
+
+[[kv_namespaces]]
+binding = "ATTENDANCE_KV"
+id = "3b07efd4b3ed4b059510c8d5a3d90109"
